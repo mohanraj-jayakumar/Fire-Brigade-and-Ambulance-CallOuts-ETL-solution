@@ -1,0 +1,87 @@
+#Creating database and connecting database with visual studio
+create_db = ('create database "10577457"')
+cursor = connection.cursor()
+cursor.execute(create_db)
+
+db_nm = str(10577457)
+connection = pypyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=LAPTOP-NAGLDO2B;DATABASE='+ db_nm +';Trusted_Connection=yes;')
+cursor = connection.cursor()
+
+create_cmd = ('create table callOuts(Date date,"Station Area" varchar(50),Description text,TOC time,ORD time,MOB time,IA time,LS time,AH time,MAV time,CD time);')
+cursor.execute(create_cmd)
+
+for i,r in callOut_csv.iterrows():
+    insert_q = ("insert into callOuts(Date,[Station Area],Description,TOC,ORD,MOB,IA,LS,AH,MAV,CD) values(?,?,?,?,?,?,?,?,?,?,?)")
+    v = [r.Date,r[1],r.Description,r.TOC,r.ORD,r.MOB,r.IA,r.LS,r.AH,r.MAV,r.CD]
+    cursor.execute(insert_q,v)
+connection.commit()
+connection.close()
+
+#ADDING PACKAGES TO CONNECT THE SERVER
+connection = pypyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER=LAPTOP-NAGLDO2B;DATABASE=master;Trusted_Connection=yes;',autocommit = True)
+
+#Importing Packages
+import pandas as pd
+import io
+import datetime
+import numpy as np
+import pypyodbc
+
+
+# 1.Load the CSV as Pandas Dataframe and parse date column as per Datetime Format 
+callOut_csv = pd.read_csv(r'C:\Users\Mohanraj\OneDrive\Desktop\paul CA2 assignment\FireBrigadeAndAmbulanceCallOuts.csv')
+
+#Describing the file
+callOut_csv.describe()
+
+#Displaying the info of the file
+callOut_csv.info()
+
+# 2.Getting Shape of the Dataframe(rows, columns) as array
+df_shape = callOut_csv.shape
+print('Number of Rows: ', df_shape[0], '\nNumber of Columns: ', df_shape[1]) 
+
+# 3.The number of non-null rows (by column)
+print('Number of Non-Null rows',callOut_csv.notna().sum())
+
+# 4.The number of null values (by column)
+print('Number of Null rows',callOut_csv.isna().sum())
+
+# 5.The number of null values for all columns
+print('Number of Null rows in all columns',callOut_csv.isna().sum().sum())
+
+# 6.The total number of call outs by Station Area
+print('Total number of call outs by Station Area',callOut_csv['Station Area'].value_counts())
+
+# 7.The total number of call outs by Date and Station Area
+callout_date_desc = callOut_csv.groupby(['Date', 'Station Area']).size()
+callout_date_desc_df = pd.DataFrame(callout_date_desc)
+callout_date_desc_df.head(20)
+
+# 8.The total number of call outs by Station Area and Date where the description is either Fire Car or Fire Alarm
+callOut_csv_1 = callOut_csv[callOut_csv.Description.isin(["Fire CAR", "Fire ALARM"])]
+callout_date_desc1 = callOut_csv_1.groupby(['Station Area', 'Date','Description']).size()
+callout_date_desc_df1 = pd.DataFrame(callout_date_desc1)
+callout_date_desc_df1.head(30)
+
+# 9.Replacing any instance of “,” (in any column) with an empty string
+callOut_csv.replace(',', np.nan, inplace=True)
+print(callOut_csv)
+
+# 10.Replacing any instance of “-” (in any column) with an empty string
+callOut_csv.replace('-', np.nan, inplace=True)
+print(callOut_csv)
+
+# 11.Drop rows for the columns (AH, MAV, CD) where at least one row value is NULL
+callOut_csv.dropna(subset=['AH', 'MAV', 'CD'], axis = 0, inplace = True)
+callOut_csv.info()
+
+# 12.Drop any duplicate rows (except for the first occurrence)
+callOut_csv.drop_duplicates(keep = 'first', inplace = True)
+callOut_csv.info()
+
+# 13. Finding minimum time difference between TOC and ORD
+callOut_csv.one = pd.to_datetime(callOut_csv['TOC'])
+callOut_csv.two = pd.to_datetime(callOut_csv['ORD'])
+difference = (callOut_csv.two - callOut_csv.one)
+print(difference.min())
