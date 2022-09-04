@@ -1,0 +1,1 @@
+ETL processing in python has successfully transformed and implemented using the given packages and the data are cleaned up with the help said functions and finally the table has been loaded to the SQL Server by transferring the data and resulted in getting a new database.  After these executions, the scope of the document is satisfied.
